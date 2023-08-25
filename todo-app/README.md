@@ -1,70 +1,150 @@
-# Getting Started with Create React App
+---
+theme: fancy
+---
+在这个笔记中，我们将介绍如何使用React来创建一个简单的待办事项列表应用。该应用允许用户添加、编辑和删除待办事项，帮助用户更好地组织他们的日常任务。
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 准备工作
 
-## Available Scripts
+我们将使用Node.js和npm（Node包管理器）。
 
-In the project directory, you can run:
+## 创建新的React应用
 
-### `npm start`
+首先，我们需要创建一个新的React应用。在命令行中运行以下命令：
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+npx create-react-app todo-app
+```
 
-### `npm test`
+创建一个名为`todo-app`的新文件夹，并在其中设置一个基本的React应用结构。
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 编写组件
 
-### `npm run build`
+进入新创建的应用文件夹：
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+cd todo-app
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+现在，我们将开始编写我们的待办事项列表应用。
 
-### `npm run eject`
+### 创建TodoList组件
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+首先，我们将创建一个名为`TodoList`的组件，用于显示待办事项列表。在`src`文件夹中创建一个新的文件`TodoList.js`，并添加以下代码：
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```jsx
+import React from 'react';
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+const TodoList = ({ todos, onDelete, onEdit }) => {
+  return (
+    <ul>
+      {todos.map(todo => (
+        <li key={todo.id}>
+          {todo.text}
+          <button onClick={() => onEdit(todo.id)}>编辑</button>
+          <button onClick={() => onDelete(todo.id)}>删除</button>
+        </li>
+      ))}
+    </ul>
+  );
+};
 
-## Learn More
+export default TodoList;
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 创建App组件
 
-### Code Splitting
+接下来，我们将创建一个名为`App`的组件，它将包含待办事项的状态并处理添加、编辑和删除功能。在`src`文件夹中的`App.js`文件中，添加以下代码：
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```jsx
+import React, { useState } from 'react';
+import TodoList from './TodoList';
 
-### Analyzing the Bundle Size
+const App = () => {
+  const [todos, setTodos] = useState([]);
+  const [currentTodo, setCurrentTodo] = useState('');
+  const [editingTodoId, setEditingTodoId] = useState(null); // 用于跟踪正在编辑的待办事项的ID
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+  const handleAddTodo = () => {
+    if (currentTodo.trim() !== '') {
+      setTodos([...todos, { id: Date.now(), text: currentTodo }]);
+      setCurrentTodo('');
+    }
+  };
 
-### Making a Progressive Web App
+  const handleEditTodo = (id) => {
+    setEditingTodoId(id); // 设置正在编辑的待办事项的ID
+    const editedText = todos.find(todo => todo.id === id).text;
+    setCurrentTodo(editedText); // 将文本设置为待办事项的文本，以便编辑
+  };
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+  const handleSaveEdit = () => {
+    if (editingTodoId !== null) {
+      const updatedTodos = todos.map(todo => {
+        if (todo.id === editingTodoId) {
+          return { ...todo, text: currentTodo };
+        }
+        return todo;
+      });
+      setTodos(updatedTodos);
+      setCurrentTodo('');
+      setEditingTodoId(null); // 退出编辑状态
+    }
+  };
 
-### Advanced Configuration
+  const handleDeleteTodo = (id) => {
+    const updatedTodos = todos.filter(todo => todo.id !== id);
+    setTodos(updatedTodos);
+  };
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+  return (
+    <div>
+      <h1>Todo App</h1>
+      <div>
+        <input
+          type="text"
+          value={currentTodo}
+          onChange={(e) => setCurrentTodo(e.target.value)}
+        />
+        {editingTodoId !== null ? (
+          <>
+            <button onClick={handleSaveEdit}>保存编辑</button>
+            <button onClick={() => setEditingTodoId(null)}>取消编辑</button>
+          </>
+        ) : (
+          <button onClick={handleAddTodo}>添加</button>
+        )}
+      </div>
+      <TodoList
+        todos={todos}
+        onDelete={handleDeleteTodo}
+        onEdit={handleEditTodo}
+      />
+    </div>
+  );
+};
 
-### Deployment
+export default App;
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
+在上面的代码中，我们添加了一个名为`editingTodoId`的状态，用于跟踪正在编辑的待办事项的ID。当用户点击“编辑”按钮时，我们设置`editingTodoId`为正在编辑的待办事项的ID，并将待办事项的文本内容设置为当前文本。同时，我们更新了按钮，以便显示“保存编辑”和“取消编辑”按钮。
 
-### `npm run build` fails to minify
+当用户点击“保存编辑”按钮时，我们使用`handleSaveEdit`函数来更新待办事项的文本内容。我们遍历待办事项列表，找到正在编辑的事项，更新其文本内容，然后将修改后的列表设置为新的状态。最后，我们重置当前文本，退出编辑状态，将`editingTodoId`设置为`null`。
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+在这个组件中，我们使用`useState`来管理待办事项列表和当前输入的待办事项。我们定义了处理添加、编辑和删除待办事项的函数，以及将它们传递给`TodoList`组件。
+
+## 运行应用
+
+在命令行中运行以下命令来启动应用：
+
+
+```bash
+npm start
+```
+
+## 总结
+
+通过按照上述步骤，创建了一个使用React的简单待办事项列表应用。这个应用允许用户添加、编辑和删除待办事项，是一个入门级别的React项目示例。
